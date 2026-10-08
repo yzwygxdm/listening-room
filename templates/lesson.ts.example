@@ -1,0 +1,31 @@
+import type { Lesson } from "../types"
+
+// Copy into src/lessons/ after replacing the placeholders with supplied material.
+export default {
+  id: "YYYY-MM-DD-unique-topic",
+  day: 2,
+  date: "YYYY-MM-DD",
+  title: "节目或视频标题",
+  tag: "中文主题 · TOPIC",
+  source: "节目名称",
+  sourceCode: "SRC",
+  sourceUrl: "https://example.com/actual-source",
+  kind: "podcast",
+  durationMinutes: 12,
+  vocabularyLabel: "主题词汇",
+  cards: [{ w: "expression", m: "含义", e: "An original practice example." }],
+  financeCards: [["topic vocabulary", "含义", "An original practice example."]],
+  quizzes: [{
+    q: "选择题题干", opts: ["正确选项", "干扰项"], a: 0,
+    en: "Use **the target expression** in a sentence.", zh: "例句译文", key: "the target expression",
+  }],
+  financeQs: [{
+    before: "Use ", after: " in this sentence.", ans: "the target word",
+    opts: ["the target word", "a distractor"], hint: "提示", zh: "完整句译文",
+  }],
+  prompts: [{
+    topic: "Writing topic", cn: "中文任务", words: ["expression"],
+    tip: "扩写引导", follow: "Can you give one specific example?",
+    ex: "An original practice example.", zh: "例句译文",
+  }],
+} satisfies Lesson
