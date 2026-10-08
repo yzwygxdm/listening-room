@@ -343,7 +343,6 @@ export default function App() {
           {libraryError && <p role="alert">{libraryError}</p>}
           <button className="primary" onClick={() => setImportOpen(true)}>导入第一期内容</button>
           <div className="empty-actions">
-            <a className="secondary" href={`${import.meta.env.BASE_URL}life-kit-pack-01.json`} download="life-kit-pack-01.json">下载 Life Kit 首期学习包</a>
             <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">下载免费示范学习包</a>
             <button className="secondary" onClick={() => backupInputRef.current?.click()}>恢复资料库备份</button>
           </div>
@@ -683,7 +682,6 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
             ))}
           </select>
           <button className="secondary" onClick={onImportClick}>＋ 导入节目</button>
-          <a className="secondary" href={`${import.meta.env.BASE_URL}life-kit-pack-01.json`} download="life-kit-pack-01.json">Life Kit 首期学习包</a>
           <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">免费示范包</a>
           <button className="secondary" onClick={onBackupClick}>导出备份</button>
           <button className="secondary" onClick={onRestoreClick}>恢复备份</button>
