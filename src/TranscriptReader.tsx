@@ -25,10 +25,12 @@ function mergeMarks(marks: Mark[]): Mark[] {
   }, [])
 }
 
-export default function TranscriptReader({ id, transcript, expressions }: {
+export default function TranscriptReader({ id, transcript, expressions, readingKind, readingNote }: {
   id: string
   transcript: string
   expressions: { w: string; m: string }[]
+  readingKind?: "study-guide"
+  readingNote?: string
 }) {
   const contentRef = useRef<HTMLDivElement>(null)
   const translatorRef = useRef<BrowserTranslator | null>(null)
@@ -97,9 +99,10 @@ export default function TranscriptReader({ id, transcript, expressions }: {
   return (
     <section className="transcript-reader" aria-labelledby="transcript-title">
       <div className="transcript-head">
-        <div><span className="eyebrow">LISTEN & READ</span><h2 id="transcript-title">边听边读</h2></div>
+        <div><span className="eyebrow">{readingKind === "study-guide" ? "ORIGINAL STUDY GUIDE" : "LISTEN & READ"}</span><h2 id="transcript-title">{readingKind === "study-guide" ? "原创英文学习导读" : "边听边读"}</h2></div>
         <span>选中英文后可翻译或高亮</span>
       </div>
+      {readingNote && <p className="reading-note">{readingNote}</p>}
       {selection && <div className="selection-tools">
         <span title={transcript.slice(selection.start, selection.end)}>{transcript.slice(selection.start, selection.end)}</span>
         <button type="button" onClick={() => void translateSelection()} disabled={translating}>翻译选中</button>

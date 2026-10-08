@@ -343,6 +343,7 @@ export default function App() {
           {libraryError && <p role="alert">{libraryError}</p>}
           <button className="primary" onClick={() => setImportOpen(true)}>导入第一期内容</button>
           <div className="empty-actions">
+            <a className="secondary" href={`${import.meta.env.BASE_URL}life-kit-pack-01.json`} download="life-kit-pack-01.json">下载 Life Kit 首期学习包</a>
             <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">下载免费示范学习包</a>
             <button className="secondary" onClick={() => backupInputRef.current?.click()}>恢复资料库备份</button>
           </div>
@@ -356,10 +357,11 @@ export default function App() {
           event.target.value = ""
         }} />
       {libraryNotice && <div className="library-notice" role="status">{libraryNotice}</div>}
-      {importOpen && <ImportLessonModal onClose={() => setImportOpen(false)} onImported={(record) => {
-        setLocalRecords((current) => [...current, record])
-        store("listening-room-selected-lesson", record.lesson.id)
-        setSelectedId(record.lesson.id)
+      {importOpen && <ImportLessonModal onClose={() => setImportOpen(false)} onImported={(records) => {
+        setLocalRecords((current) => [...current, ...records])
+        store("listening-room-selected-lesson", records[0].lesson.id)
+        setSelectedId(records[0].lesson.id)
+        setLibraryNotice(`已导入 ${records.length} 期学习内容。`)
         setImportOpen(false)
       }} />}
     </>
@@ -378,7 +380,8 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
   onAttachAudio: (file: File) => void
 }) {
   const { cards, financeCards, quizzes, financeQs, prompts } = lesson
-  const dayLabel = lesson.local ? "MY" : String(lesson.day).padStart(2, "0")
+  const dayLabel = lesson.local && !lesson.readingKind ? "MY" : String(lesson.day).padStart(2, "0")
+  const hasSeparateVocabulary = !lesson.local || lesson.readingKind === "study-guide"
   const lessonSteps = steps
   const [audioUrl, setAudioUrl] = useState("")
   const audioInputRef = useRef<HTMLInputElement>(null)
@@ -676,10 +679,11 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
           <label htmlFor="lesson">学习内容</label>
           <select id="lesson" value={lesson.id} onChange={(event) => onLessonChange(event.target.value)}>
             {allLessons.slice().reverse().map((item) => (
-              <option key={item.id} value={item.id}>{item.local ? "我的导入" : `Day ${String(item.day).padStart(2, "0")}`} · {item.date} · {item.title}</option>
+              <option key={item.id} value={item.id}>{item.readingKind === "study-guide" ? `学习包 ${String(item.day).padStart(2, "0")}` : item.local ? "我的导入" : `Day ${String(item.day).padStart(2, "0")}`} · {item.date} · {item.title}</option>
             ))}
           </select>
           <button className="secondary" onClick={onImportClick}>＋ 导入节目</button>
+          <a className="secondary" href={`${import.meta.env.BASE_URL}life-kit-pack-01.json`} download="life-kit-pack-01.json">Life Kit 首期学习包</a>
           <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">免费示范包</a>
           <button className="secondary" onClick={onBackupClick}>导出备份</button>
           <button className="secondary" onClick={onRestoreClick}>恢复备份</button>
@@ -720,7 +724,7 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
                 <Icon name="clock" size={15} /> 约 {lesson.durationMinutes} 分钟
               </span><i /></>}
               <span>{cards.length} 个地道表达</span>
-              {!lesson.local && <><i /><span>{financeCards.length} 个{lesson.vocabularyLabel}</span></>}
+              {hasSeparateVocabulary && <><i /><span>{financeCards.length} 个{lesson.vocabularyLabel}</span></>}
             </div>
           </div>
           <article className="episode-card">
@@ -736,7 +740,7 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
               <span className="topic-tag">{lesson.tag}</span>
               <h2>{lesson.title}</h2>
               <div className="episode-source">
-                {lesson.local ? <span className="local-source">我的资料</span> : <span className="npr-logo">
+                {lesson.local ? <span className="local-source">{lesson.readingKind === "study-guide" ? "学习包" : "我的资料"}</span> : <span className="npr-logo">
                   {lesson.sourceCode.slice(0, 3).toLowerCase().split("").map((letter, i) => <b key={i}>{letter}</b>)}
                 </span>}
                 <span>{lesson.source}</span>
@@ -755,7 +759,7 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
         {(audioUrl || lesson.overview?.audioUrl) && <audio className="episode-player" key={lesson.id} controls preload="metadata"
           src={audioUrl || lesson.overview?.audioUrl} aria-label="播放本期音频" />}
         {lesson.local && !audioBlob && <div className="audio-empty">
-          <span>还没有音频。文字稿和练习可先使用，音频由你自行添加。</span>
+          <span>还没有音频。{lesson.readingKind === "study-guide" ? "原创导读" : "文字稿"}和练习可先使用，音频由你自行添加。</span>
           <button className="secondary" onClick={() => audioInputRef.current?.click()}>添加音频文件</button>
           <input ref={audioInputRef} type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden
             onChange={(event) => {
@@ -764,7 +768,8 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
               event.target.value = ""
             }} />
         </div>}
-        {lesson.transcript && <TranscriptReader id={lesson.id} transcript={lesson.transcript} expressions={lesson.cards} />}
+        {lesson.transcript && <TranscriptReader id={lesson.id} transcript={lesson.transcript} expressions={lesson.cards}
+          readingKind={lesson.readingKind} readingNote={lesson.readingNote} />}
         <div className="workspace">
           <aside className="practice-sidebar">
             <div className="sidebar-title">
@@ -1246,7 +1251,7 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
                 </span>
                 <span>
                   <b>本期表达库</b>
-                  <small>{cards.length} 个地道表达{lesson.local ? "" : ` · ${financeCards.length} 个${lesson.vocabularyLabel}`}，随时回来看看</small>
+                  <small>{cards.length} 个地道表达{hasSeparateVocabulary ? ` · ${financeCards.length} 个${lesson.vocabularyLabel}` : ""}，随时回来看看</small>
                 </span>
                 <Icon
                   name="chevron"
@@ -1263,7 +1268,7 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
                     >
                       地道表达 · {cards.length}
                     </button>
-                    {!lesson.local && <button
+                    {hasSeparateVocabulary && <button
                       className={libraryTab === "finance" ? "active" : ""}
                       onClick={() => setLibraryTab("finance")}
                     >

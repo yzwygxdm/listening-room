@@ -2,6 +2,8 @@ export type Lesson = {
   id: string
   local?: boolean
   transcript?: string
+  readingKind?: "study-guide"
+  readingNote?: string
   day: number
   date: string
   title: string

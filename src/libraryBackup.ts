@@ -1,5 +1,7 @@
 import { createLocalLesson, type Expression } from "./createLocalLesson"
 import { saveLocalLesson, type LocalLesson } from "./localLessons"
+import { validateBundleLesson } from "./learningPack"
+import type { Lesson } from "./types"
 
 type BackupLesson = {
   id: string
@@ -8,6 +10,7 @@ type BackupLesson = {
   transcript: string
   sourceUrl: string
   expressions: Expression[]
+  bundleLesson?: Lesson
   createdAt?: number
   marks: { start: number; end: number }[]
   progress: string[]
@@ -54,6 +57,7 @@ export function createLibraryBackup(records: LocalLesson[]): Blob {
         word: card.w, meaning: card.m, example: card.e,
         exampleZh: lesson.quizzes.find((item) => item.key === card.w)?.zh ?? "",
       })),
+      ...(lesson.readingKind === "study-guide" ? { bundleLesson: lesson } : {}),
       marks: Array.isArray(marks) ? marks : [],
       progress: Array.isArray(progress) ? progress : [],
       drafts,
@@ -92,8 +96,12 @@ export async function restoreLibraryBackup(file: File, existing: LocalLesson[]):
         throw new Error("备份中的表达格式不正确。")
       return item as Expression
     })
-    const lesson = createLocalLesson({ title: raw.title, transcript: raw.transcript,
-      sourceUrl: raw.sourceUrl, expressions })
+    const lesson = raw.bundleLesson === undefined
+      ? createLocalLesson({ title: raw.title, transcript: raw.transcript,
+        sourceUrl: raw.sourceUrl, expressions })
+      : validateBundleLesson(raw.bundleLesson)
+    if (raw.bundleLesson !== undefined && lesson.id !== raw.id)
+      throw new Error("备份中的学习包章节 ID 不匹配。")
     lesson.id = raw.id
     lesson.date = raw.date
     const transcriptLength = raw.transcript.length

@@ -242,3 +242,21 @@ textarea::placeholder { color: #b2baa8; font-size: 12px; }
 .selection-translation { background: #eef5e8; border-radius: 8px; padding: 11px 13px; color: #496d45; font-size: 12px; line-height: 1.8; margin: 10px 0 0; }
 .clear-highlights { margin-top: 10px; }
 @media (max-width: 760px) { .import-modal { padding: 22px; }.transcript-reader { padding: 17px; }.transcript-head { align-items: start; flex-direction: column; }.transcript-text { font-size: 13px; } }
+.reading-note {
+  margin: 0 0 18px;
+  color: #6d6b68;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.bundle-preview {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid #e5ded4;
+  border-radius: 14px;
+  background: #faf8f4;
+  line-height: 1.65;
+}
+
+.bundle-preview ul { margin: 8px 0; padding-left: 20px; }
+.bundle-preview li { margin: 4px 0; }

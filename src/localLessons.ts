@@ -45,3 +45,18 @@ export async function saveLocalLesson(record: LocalLesson): Promise<void> {
     db.close()
   }
 }
+
+export async function saveLocalLessons(records: LocalLesson[]): Promise<void> {
+  if (!records.length) return
+  const db = await openDatabase()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE, "readwrite")
+      const store = transaction.objectStore(STORE)
+      for (const record of records) store.add(record)
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error ?? new Error("无法保存学习包。"))
+    })
+  } finally { db.close() }
+}
