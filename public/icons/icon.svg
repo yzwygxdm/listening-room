@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="播客英语复习室">
+  <rect width="512" height="512" rx="112" fill="#34755b"/>
+  <circle cx="256" cy="256" r="169" fill="#f6f8f4"/>
+  <path d="M166 276v-25c0-55 40-96 90-96s90 41 90 96v25" fill="none" stroke="#34755b" stroke-width="23" stroke-linecap="round"/>
+  <rect x="150" y="258" width="37" height="81" rx="18" fill="#34755b"/>
+  <rect x="325" y="258" width="37" height="81" rx="18" fill="#34755b"/>
+  <path d="M210 304c20-8 36-6 46 2 10-8 26-10 46-2v58c-20-7-36-5-46 4-10-9-26-11-46-4z" fill="none" stroke="#34755b" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M256 308v56" stroke="#34755b" stroke-width="12"/>
+</svg>
