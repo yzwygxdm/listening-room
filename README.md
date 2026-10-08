@@ -49,6 +49,12 @@ pnpm preview
 
 `.gitignore` 排除了环境配置、依赖、构建结果、日志和常见密钥文件。本项目没有自带批改后台，发布网页后仍可选择自己的 API。上传源代码到 GitHub 与发布一个可访问的网站是两个步骤。
 
+## 部署到 GitHub Pages
+
+仓库已包含 `.github/workflows/deploy.yml`，在 `main` 分支每次推送时构建并发布静态网页。首次部署前，请在 GitHub 仓库打开 **Settings → Pages**，将 **Build and deployment → Source** 设为 **GitHub Actions**。工作流成功后，网页地址为 `https://yzwygxdm.github.io/listening-room/`。部署状态可在仓库的 **Actions** 页面查看。
+
+GitHub Pages 只托管网页，不提供 AI 批改后台。AI 仍默认关闭；需要批改时，使用者自行填写外部服务地址。GitHub Pages 与本地预览属于不同网站地址，浏览器里已有的学习进度和句子不会自动迁移，可使用句子库的导出、导入功能。
+
 ## 学习记录
 
 每一期的复习进度与造句草稿分别保存；句子库跨期次共用，记录来源期次和日期。句子与反馈保存在当前设备、当前浏览器、当前网站地址中。
