@@ -384,6 +384,13 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
   const lessonSteps = steps
   const [audioUrl, setAudioUrl] = useState("")
   const audioInputRef = useRef<HTMLInputElement>(null)
+  const legacyOnlineAudio = lesson.readingKind === "study-guide"
+    ? (() => {
+      const source = lessons.find((item) => item.sourceUrl === lesson.sourceUrl)
+      return source?.audioUrl ?? source?.overview?.audioUrl
+    })()
+    : undefined
+  const playableAudio = audioBlob ? audioUrl : lesson.audioUrl || legacyOnlineAudio || lesson.overview?.audioUrl
   useEffect(() => {
     if (!audioBlob) return
     const url = URL.createObjectURL(audioBlob)
@@ -754,9 +761,9 @@ function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportCli
             </div>
           </article>
         </section>
-        {(audioUrl || lesson.overview?.audioUrl) && <audio className="episode-player" key={lesson.id} controls preload="metadata"
-          src={audioUrl || lesson.overview?.audioUrl} aria-label="播放本期音频" />}
-        {lesson.local && !audioBlob && <div className="audio-empty">
+        {playableAudio && <audio className="episode-player" key={lesson.id} controls preload="metadata"
+          src={playableAudio} aria-label="播放本期音频" />}
+        {lesson.local && !audioBlob && !playableAudio && <div className="audio-empty">
           <span>还没有音频。{lesson.readingKind === "study-guide" ? "原创导读" : "文字稿"}和练习可先使用，音频由你自行添加。</span>
           <button className="secondary" onClick={() => audioInputRef.current?.click()}>添加音频文件</button>
           <input ref={audioInputRef} type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden

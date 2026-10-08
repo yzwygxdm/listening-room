@@ -11,6 +11,7 @@ export type Lesson = {
   source: string
   sourceCode: string
   sourceUrl: string
+  audioUrl?: string
   kind: "podcast" | "video"
   durationMinutes: number
   vocabularyLabel: string

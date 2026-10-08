@@ -490,6 +490,7 @@ export default {
   source: "NPR · Life Kit",
   sourceCode: "NPR",
   sourceUrl: "https://www.npr.org/2026/10/01/nx-s1-5986354/theres-still-time-to-reach-your-2026-money-goals",
+  audioUrl: "https://tracking.swap.fm/track/XvDEoI11TR00olTUO8US/prfx.byspotify.com/e/play.podtrac.com/npr-510338/npr.simplecastaudio.com/8ae5a040-e346-4b89-ba6b-625f91f1fbd4/episodes/f211ba75-8972-426a-a27a-577509d04a6f/audio/128/default.mp3?awCollectionId=8ae5a040-e346-4b89-ba6b-625f91f1fbd4&awEpisodeId=f211ba75-8972-426a-a27a-577509d04a6f&feed=XkY2SBZJ&t=podcast&e=nx-s1-5986354&p=510338&d=1152&size=18440403",
   kind: "podcast",
   durationMinutes: 12,
   vocabularyLabel: "主题词汇",

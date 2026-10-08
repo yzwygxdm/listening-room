@@ -34,6 +34,12 @@ function httpUrl(value: unknown, label: string): string {
   return url
 }
 
+function httpsUrl(value: unknown, label: string): string {
+  const url = httpUrl(value, label)
+  if (new URL(url).protocol !== "https:") throw new Error(`${label}需要 HTTPS 链接。`)
+  return url
+}
+
 function list<T>(value: unknown, label: string, max: number, parse: (item: unknown, index: number) => T): T[] {
   if (!Array.isArray(value) || !value.length || value.length > max)
     throw new Error(`${label}数量不正确。`)
@@ -98,7 +104,9 @@ export function validateBundleLesson(value: unknown): Lesson {
       string(value.readingNote, "导读说明", 500), transcript: reading,
     day: Number(day), date, title: string(value.title, "章节标题", 300),
     tag: string(value.tag, "章节主题", 150), source: string(value.source, "节目来源", 150),
-    sourceCode: "MY", sourceUrl: httpUrl(value.sourceUrl, "节目链接"), kind: "podcast",
+    sourceCode: "MY", sourceUrl: httpUrl(value.sourceUrl, "节目链接"),
+    ...(value.audioUrl === undefined ? {} : { audioUrl: httpsUrl(value.audioUrl, "在线音频链接") }),
+    kind: "podcast",
     durationMinutes: 0, vocabularyLabel: "主题词汇", cards, financeCards, quizzes, financeQs, prompts }
 }
 

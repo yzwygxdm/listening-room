@@ -60,7 +60,7 @@ export default function ImportLessonModal({ onClose, onImported }: {
         <button type="button" className="import-close" onClick={onClose} aria-label="关闭导入">×</button>
         <span className="eyebrow">BUILD YOUR OWN LIBRARY</span>
         <h2 id="import-title">{bundle ? "导入多期学习包" : "导入一段自己的播客学习材料"}</h2>
-        <p>{bundle ? "学习包会保存在此浏览器；阅读材料为原创导读，原节目请通过来源链接访问。" : "音频、逐字稿和表达只保存在此浏览器，不会上传到本站服务器。使用者请自行确认材料的使用权限。"}</p>
+        <p>{bundle ? "学习包会保存在此浏览器；阅读材料为原创导读。含在线音频链接的章节可直接播放原节目。" : "音频、逐字稿和表达只保存在此浏览器，不会上传到本站服务器。使用者请自行确认材料的使用权限。"}</p>
         <div className="pack-import">
           <label htmlFor="import-pack">已有学习包？选择单期或多期合集 JSON 文件</label>
           <input id="import-pack" type="file" accept=".json,application/json" onChange={(event) => {
@@ -94,7 +94,7 @@ export default function ImportLessonModal({ onClose, onImported }: {
           <div className="bundle-preview">
             <b>{bundle.title}</b>
             <ul>{bundle.lessons.map((lesson) => <li key={lesson.id}>{lesson.date} · {lesson.title} · {lesson.cards.length} 个表达、{lesson.financeCards.length} 个主题词汇</li>)}</ul>
-            <small>不含原节目音频或逐字稿。导入已有期次时不会覆盖你的进度或自行添加的音频。</small>
+            <small>不打包原节目音频文件或逐字稿；在线收听取决于节目来源能否访问。导入已有期次时不会覆盖你的进度或自行添加的音频。</small>
           </div>
           {error && <p className="import-error" role="alert">{error}</p>}
           <button className="primary" type="button" disabled={busy} onClick={() => void importBundle()}>{busy ? "正在保存到浏览器…" : `导入 ${bundle.lessons.length} 期学习内容`}</button>
