@@ -1,5 +1,7 @@
 export type Lesson = {
   id: string
+  local?: boolean
+  transcript?: string
   day: number
   date: string
   title: string

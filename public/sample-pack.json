@@ -1,0 +1,13 @@
+{
+  "format": "listening-room-pack-v1",
+  "title": "A Small Walk Before Work · 原创示范材料",
+  "sourceUrl": "",
+  "transcript": "Last year I started taking a short walk before work. At first, I wanted to get some exercise, but the real benefit was having time to clear my head. On busy mornings, I put my phone away and pay attention to the street around me. Some days I only walk for ten minutes; that is enough to ease into the day. When a difficult task is waiting, I break it down while I walk. By the time I sit down, I have a rough plan. The habit did not transform my life overnight. It simply gave me a small pocket of quiet. That makes it easier to follow through on one important thing, even when the rest of the day feels messy.",
+  "expressions": [
+    { "word": "clear my head", "meaning": "清理思绪；让头脑清醒", "example": "A short walk helps me clear my head before work.", "exampleZh": "短暂散步能让我在上班前理清思绪。" },
+    { "word": "pay attention to", "meaning": "注意；留意", "example": "I try to pay attention to my surroundings instead of my phone.", "exampleZh": "我尽量留意周围环境，而不是看手机。" },
+    { "word": "ease into", "meaning": "逐渐进入；慢慢适应", "example": "A quiet morning helps me ease into the day.", "exampleZh": "安静的早晨让我慢慢进入一天的状态。" },
+    { "word": "break it down", "meaning": "把它拆解成小部分", "example": "When a task feels too large, I break it down into smaller steps.", "exampleZh": "任务太大时，我会把它拆成更小的步骤。" },
+    { "word": "follow through on", "meaning": "坚持完成；落实", "example": "I want to follow through on one important plan today.", "exampleZh": "今天我想落实一项重要计划。" }
+  ]
+}

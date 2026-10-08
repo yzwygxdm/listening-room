@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { lessons } from "./data"
 import type { Lesson } from "./types"
+import ImportLessonModal from "./ImportLessonModal"
+import TranscriptReader from "./TranscriptReader"
+import { readLocalLessons, saveLocalLesson, type LocalLesson } from "./localLessons"
+import { validateAudioFile } from "./createLocalLesson"
+import { createLibraryBackup, restoreLibraryBackup } from "./libraryBackup"
 
 type IconName = "headphones" | "arrow" | "chevron" | "shuffle" | "volume" | "cards" | "check" | "chart" | "pen" | "book" | "sun" | "clock" | "spark" | "leaf" | "download" | "settings" | "close"
 function Icon({
@@ -255,34 +260,134 @@ function store(key: string, value: unknown) {
 }
 
 export default function App() {
-  const [selectedId, setSelectedId] = useState(() => {
-    const saved = load<string>("listening-room-selected-lesson", "")
-    return lessons.some((lesson) => lesson.id === saved)
-      ? saved
-      : lessons[lessons.length - 1].id
-  })
-  const lesson = lessons.find((item) => item.id === selectedId) ?? lessons[lessons.length - 1]
+  const [selectedId, setSelectedId] = useState(() => load<string>("listening-room-selected-lesson", ""))
+  const [legacyVisible] = useState(() => lessons.some((lesson) =>
+    lesson.id === load<string>("listening-room-selected-lesson", "") ||
+    localStorage.getItem(`listening-room-progress:${lesson.id}`) !== null ||
+    localStorage.getItem(`listening-room-draft:${lesson.id}:0`) !== null,
+  ))
+  const [localRecords, setLocalRecords] = useState<LocalLesson[]>([])
+  const [loading, setLoading] = useState(true)
+  const [libraryError, setLibraryError] = useState("")
+  const [libraryNotice, setLibraryNotice] = useState("")
+  const [backupRevision, setBackupRevision] = useState(0)
+  const [importOpen, setImportOpen] = useState(false)
+  const backupInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    void readLocalLessons().then((records) => {
+      setLocalRecords(records)
+      const saved = load<string>("listening-room-selected-lesson", "")
+      if (!records.some(({ lesson }) => lesson.id === saved) && !(legacyVisible && lessons.some(({ id }) => id === saved)))
+        setSelectedId(records[records.length - 1]?.lesson.id ??
+          (legacyVisible ? lessons[lessons.length - 1].id : ""))
+    }).catch(() => setLibraryError("无法读取此浏览器的本地资料库，请检查站点存储设置。"))
+      .finally(() => setLoading(false))
+  }, [legacyVisible])
+  const availableLessons = [
+    ...(legacyVisible ? lessons : []),
+    ...localRecords.map(({ lesson }) => lesson),
+  ]
+  const lesson = availableLessons.find((item) => item.id === selectedId)
+  const localAudio = localRecords.find((record) => record.lesson.id === selectedId)?.audio
+  function downloadBackup() {
+    try {
+      const url = URL.createObjectURL(createLibraryBackup(localRecords))
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `listening-room-backup-${new Date().toLocaleDateString("en-CA")}.json`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setLibraryNotice("资料库备份已下载。音频文件不在备份中，请另行保留。")
+    } catch { setLibraryNotice("无法导出备份，请检查浏览器存储权限。") }
+  }
+  async function restoreBackup(file: File) {
+    try {
+      const restored = await restoreLibraryBackup(file, localRecords)
+      setLocalRecords((current) => [...current, ...restored])
+      setBackupRevision((value) => value + 1)
+      if (restored.length && !selectedId) {
+        store("listening-room-selected-lesson", restored[0].lesson.id)
+        setSelectedId(restored[0].lesson.id)
+      }
+      setLibraryNotice(`已恢复 ${restored.length} 期新内容；已有期次和句子保留。音频需重新添加。`)
+    } catch (cause) {
+      setLibraryNotice(cause instanceof Error ? cause.message : "恢复失败，请检查备份文件。")
+    }
+  }
+  async function attachAudio(file: File) {
+    const current = localRecords.find((record) => record.lesson.id === selectedId)
+    if (!current) return
+    try {
+      validateAudioFile(file)
+      const updated = { ...current, audio: file }
+      await saveLocalLesson(updated)
+      setLocalRecords((records) => records.map((record) => record.lesson.id === selectedId ? updated : record))
+      setLibraryNotice("音频已保存在此浏览器，可以开始播放。")
+    } catch (cause) { setLibraryNotice(cause instanceof Error ? cause.message : "无法保存音频。") }
+  }
   return (
-    <LessonRoom
-      key={lesson.id}
-      lesson={lesson}
-      onLessonChange={(id) => {
-        store("listening-room-selected-lesson", id)
-        setSelectedId(id)
-      }}
-    />
+    <>
+      {loading ? <div className="empty-library">正在打开你的资料库…</div> : lesson ? (
+        <LessonRoom key={`${lesson.id}:${backupRevision}`} lesson={lesson} allLessons={availableLessons} audioBlob={localAudio}
+          onImportClick={() => setImportOpen(true)} onBackupClick={downloadBackup}
+          onRestoreClick={() => backupInputRef.current?.click()} onAttachAudio={(file) => void attachAudio(file)}
+          onLessonChange={(id) => {
+            store("listening-room-selected-lesson", id)
+            setSelectedId(id)
+          }} />
+      ) : (
+        <main className="empty-library">
+          <span className="eyebrow">THE LISTENING ROOM</span>
+          <h1>把喜欢的播客，<br />变成会说的英语。</h1>
+          <p>导入自己的音频、英文逐字稿和整理好的表达；边听边读、划词翻译与高亮，再用记忆卡、小测和造句完成复习。</p>
+          {libraryError && <p role="alert">{libraryError}</p>}
+          <button className="primary" onClick={() => setImportOpen(true)}>导入第一期内容</button>
+          <div className="empty-actions">
+            <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">下载免费示范学习包</a>
+            <button className="secondary" onClick={() => backupInputRef.current?.click()}>恢复资料库备份</button>
+          </div>
+          <small>材料留在此设备的浏览器中；本站不会自动抓取或收录第三方播客。</small>
+        </main>
+      )}
+      <input ref={backupInputRef} type="file" accept=".json,application/json" hidden aria-label="选择资料库备份"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          if (file) void restoreBackup(file)
+          event.target.value = ""
+        }} />
+      {libraryNotice && <div className="library-notice" role="status">{libraryNotice}</div>}
+      {importOpen && <ImportLessonModal onClose={() => setImportOpen(false)} onImported={(record) => {
+        setLocalRecords((current) => [...current, record])
+        store("listening-room-selected-lesson", record.lesson.id)
+        setSelectedId(record.lesson.id)
+        setImportOpen(false)
+      }} />}
+    </>
   )
 }
 
-function LessonRoom({ lesson, onLessonChange }: {
+function LessonRoom({ lesson, allLessons, audioBlob, onLessonChange, onImportClick,
+  onBackupClick, onRestoreClick, onAttachAudio }: {
   lesson: Lesson
+  allLessons: Lesson[]
+  audioBlob?: Blob
   onLessonChange: (id: string) => void
+  onImportClick: () => void
+  onBackupClick: () => void
+  onRestoreClick: () => void
+  onAttachAudio: (file: File) => void
 }) {
   const { cards, financeCards, quizzes, financeQs, prompts } = lesson
-  const dayLabel = String(lesson.day).padStart(2, "0")
-  const lessonSteps = steps.map((step) => step.id === "finance"
-    ? { ...step, name: "词汇填空", en: "Words in context" }
-    : step)
+  const dayLabel = lesson.local ? "MY" : String(lesson.day).padStart(2, "0")
+  const lessonSteps = steps
+  const [audioUrl, setAudioUrl] = useState("")
+  const audioInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (!audioBlob) return
+    const url = URL.createObjectURL(audioBlob)
+    setAudioUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [audioBlob])
   const progressKey = `listening-room-progress:${lesson.id}`
   const initialDraft = load<{ sentence: string; expanded: string }>(
     `listening-room-draft:${lesson.id}:0`, { sentence: "", expanded: "" },
@@ -570,11 +675,15 @@ function LessonRoom({ lesson, onLessonChange }: {
         <div className="lesson-switcher">
           <label htmlFor="lesson">学习内容</label>
           <select id="lesson" value={lesson.id} onChange={(event) => onLessonChange(event.target.value)}>
-            {lessons.slice().reverse().map((item) => (
-              <option key={item.id} value={item.id}>Day {String(item.day).padStart(2, "0")} · {item.date} · {item.title}</option>
+            {allLessons.slice().reverse().map((item) => (
+              <option key={item.id} value={item.id}>{item.local ? "我的导入" : `Day ${String(item.day).padStart(2, "0")}`} · {item.date} · {item.title}</option>
             ))}
           </select>
-          <span>已收录 {lessons.length} 期 · 可随时回看</span>
+          <button className="secondary" onClick={onImportClick}>＋ 导入节目</button>
+          <a className="secondary" href={`${import.meta.env.BASE_URL}sample-pack.json`} download="listening-room-sample-pack.json">免费示范包</a>
+          <button className="secondary" onClick={onBackupClick}>导出备份</button>
+          <button className="secondary" onClick={onRestoreClick}>恢复备份</button>
+          <span>我的资料库 {allLessons.filter((item) => item.local).length} 期</span>
         </div>
         <section className="hero">
           <div className="hero-copy">
@@ -607,13 +716,11 @@ function LessonRoom({ lesson, onLessonChange }: {
               每天几分钟，让英语在生活里自然发生。
             </p>
             <div className="hero-meta">
-              <span>
+              {lesson.durationMinutes > 0 && <><span>
                 <Icon name="clock" size={15} /> 约 {lesson.durationMinutes} 分钟
-              </span>
-              <i />
+              </span><i /></>}
               <span>{cards.length} 个地道表达</span>
-              <i />
-              <span>{financeCards.length} 个{lesson.vocabularyLabel}</span>
+              {!lesson.local && <><i /><span>{financeCards.length} 个{lesson.vocabularyLabel}</span></>}
             </div>
           </div>
           <article className="episode-card">
@@ -629,25 +736,35 @@ function LessonRoom({ lesson, onLessonChange }: {
               <span className="topic-tag">{lesson.tag}</span>
               <h2>{lesson.title}</h2>
               <div className="episode-source">
-                <span className="npr-logo">
+                {lesson.local ? <span className="local-source">我的资料</span> : <span className="npr-logo">
                   {lesson.sourceCode.slice(0, 3).toLowerCase().split("").map((letter, i) => <b key={i}>{letter}</b>)}
-                </span>
+                </span>}
                 <span>{lesson.source}</span>
               </div>
-              <a
+              {lesson.sourceUrl && <a
                 href={lesson.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="episode-link"
               >
                 {lesson.kind === "video" ? "前往视频" : "前往播客节目"} <Icon name="arrow" size={16} />
-              </a>
+              </a>}
             </div>
           </article>
         </section>
-        {lesson.overview && (
-          <audio className="episode-player" key={lesson.id} controls preload="none" src={lesson.overview.audioUrl} aria-label="收听本期 Life Kit 原节目" />
-        )}
+        {(audioUrl || lesson.overview?.audioUrl) && <audio className="episode-player" key={lesson.id} controls preload="metadata"
+          src={audioUrl || lesson.overview?.audioUrl} aria-label="播放本期音频" />}
+        {lesson.local && !audioBlob && <div className="audio-empty">
+          <span>还没有音频。文字稿和练习可先使用，音频由你自行添加。</span>
+          <button className="secondary" onClick={() => audioInputRef.current?.click()}>添加音频文件</button>
+          <input ref={audioInputRef} type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) onAttachAudio(file)
+              event.target.value = ""
+            }} />
+        </div>}
+        {lesson.transcript && <TranscriptReader id={lesson.id} transcript={lesson.transcript} expressions={lesson.cards} />}
         <div className="workspace">
           <aside className="practice-sidebar">
             <div className="sidebar-title">
@@ -1129,7 +1246,7 @@ function LessonRoom({ lesson, onLessonChange }: {
                 </span>
                 <span>
                   <b>本期表达库</b>
-                  <small>{cards.length} 个地道表达 · {financeCards.length} 个{lesson.vocabularyLabel}，随时回来看看</small>
+                  <small>{cards.length} 个地道表达{lesson.local ? "" : ` · ${financeCards.length} 个${lesson.vocabularyLabel}`}，随时回来看看</small>
                 </span>
                 <Icon
                   name="chevron"
@@ -1146,12 +1263,12 @@ function LessonRoom({ lesson, onLessonChange }: {
                     >
                       地道表达 · {cards.length}
                     </button>
-                    <button
+                    {!lesson.local && <button
                       className={libraryTab === "finance" ? "active" : ""}
                       onClick={() => setLibraryTab("finance")}
                     >
                       {lesson.vocabularyLabel} · {financeCards.length}
-                    </button>
+                    </button>}
                   </div>
                   {(libraryTab === "expressions"
                     ? cards.map((item) => [item.w, item.m, item.e])
